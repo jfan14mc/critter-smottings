@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildlife Reporting</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .form-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .location-info {
+            background: #e8f4fd;
+            border: 2px dashed #3182ce;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .location-info.has-location {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .location-info p {
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        .coordinates {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .timestamp {
+            font-size: 0.9rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .map-section {
+            position: relative;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+
+        .map-instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .map-instructions p {
+            margin: 0;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .reports-section {
+            grid-column: 1 / -1;
+            padding: 40px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .reports-section h2 {
+            margin-bottom: 25px;
+            color: #2d3748;
+            font-size: 1.8rem;
+        }
+
+        .report-item {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .report-item strong {
+            color: #2d3748;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-section {
+                padding: 30px 20px;
+            }
+            
+            #map {
+                height: 400px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .map-instructions {
+                position: static;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦝 Wildlife Reporting Portal</h1>
+            <p>Help us track local wildlife by reporting your sightings</p>
+        </div>
+        
+        <div class="content">
+            <div class="form-section">
+                <form id="wildlife-form">
+                    <div id="success-message" class="success-message" style="display: none;">
+                        Report submitted successfully! 🎉
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="animal-type">Animal Type *</label>
+                        <select id="animal-type" name="animalType" required>
+                            <option value="">Select an animal...</option>
+                            <option value="rat">🐀 Rat</option>
+                            <option value="raccoon">🦝 Raccoon</option>
+                            <option value="fox">🦊 Fox</option>
+                            <option value="bunny">🐰 Bunny</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Location *</label>
+                        <div id="location-info" class="location-info">
+                            <p>📍 Click on the map to select a location</p>
+                            <div id="coordinates" class="coordinates" style="display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submit-btn" class="submit-btn" disabled>
+                        Submit Wildlife Report
+                    </button>
+                    
+                    <div class="timestamp">
+                        <p>⏰ Report time will be recorded automatically</p>
+                        <p id="current-time"></p>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="map-section">
+                <div class="map-instructions">
+                    <p>🗺️ Click anywhere on the map to drop a pin and mark the location</p>
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+        
+        <div class="reports-section">
+            <h2>Recent Reports</h2>
+            <div id="reports-list">
+                <p style="color: #6b7280; font-style: italic;">No reports yet. Be the first to report a wildlife sighting!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize variables
+        let map;
+        let currentMarker = null;
+        let selectedLocation = null;
+        let reports = [];
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000); // Update time every second
+        });
+
+        // Initialize Leaflet map
+        function initializeMap() {
+            // Default center (Boston area - you can change this)
+            map = L.map('map').setView([42.3601, -71.0589], 11);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click event listener to map
+            map.on('click', function(e) {
+                setLocation(e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        // Set location when map is clicked
+        function setLocation(lat, lng) {
+            selectedLocation = { lat: lat, lng: lng };
+
+            // Remove existing marker if any
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            // Add new marker
+            currentMarker = L.marker([lat, lng]).addTo(map);
+
+            // Update UI
+            const locationInfo = document.getElementById('location-info');
+            const coordinates = document.getElementById('coordinates');
+            
+            locationInfo.classList.add('has-location');
+            coordinates.style.display = 'block';
+            coordinates.textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            
+            locationInfo.querySelector('p').textContent = '✅ Location selected successfully!';
+
+            // Enable submit button if animal is also selected
+            updateSubmitButton();
+        }
+
+        // Update current time display
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                `Current time: ${now.toLocaleString()}`;
+        }
+
+        // Update submit button state
+        function updateSubmitButton() {
+            const animalType = document.getElementById('animal-type').value;
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (animalType && selectedLocation) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Animal type change handler
+        document.getElementById('animal-type').addEventListener('change', updateSubmitButton);
+
+        // Form submission handler
+        document.getElementById('wildlife-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const animalType = document.getElementById('animal-type').value;
+            
+            if (!animalType || !selectedLocation) {
+                alert('Please select both an animal type and location on the map.');
+                return;
+            }
+
+            // Create report object
+            const report = {
+                id: Date.now(), // Simple ID generation
+                animalType: animalType,
+                location: selectedLocation,
+                timestamp: new Date().toISOString(),
+                displayTime: new Date().toLocaleString()
+            };
+
+            // Add to reports array
+            reports.unshift(report); // Add to beginning of array
+
+            // Show success message
+            const successMessage = document.getElementById('success-message');
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+
+            // Reset form
+            resetForm();
+
+            // Update reports display
+            displayReports();
+        });
+
+        // Reset form to initial state
+        function resetForm() {
+            document.getElementById('animal-type').value = '';
+            selectedLocation = null;
+            
+            // Remove marker
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+                currentMarker = null;
+            }
+
+            // Reset location info
+            const locationInfo = document.getElementById('location-info');
+            const coordinates = document.getElementById('coordinates');
+            
+            locationInfo.classList.remove('has-location');
+            coordinates.style.display = 'none';
+            locationInfo.querySelector('p').textContent = '📍 Click on the map to select a location';
+
+            // Disable submit button
+            document.getElementById('submit-btn').disabled = true;
+        }
+
+        // Display reports in the UI
+        function displayReports() {
+            const reportsList = document.getElementById('reports-list');
+            
+            if (reports.length === 0) {
+                reportsList.innerHTML = '<p style="color: #6b7280; font-style: italic;">No reports yet. Be the first to report a wildlife sighting!</p>';
+                return;
+            }
+
+            const reportsHTML = reports.map(report => {
+                const animalEmoji = {
+                    'rat': '🐀',
+                    'raccoon': '🦝',
+                    'fox': '🦊',
+                    'bunny': '🐰'
+                };
+
+                return `
+                    <div class="report-item">
+                        <strong>${animalEmoji[report.animalType]} ${report.animalType.charAt(0).toUpperCase() + report.animalType.slice(1)}</strong><br>
+                        📍 Location: ${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}<br>
+                        ⏰ Reported: ${report.displayTime}
+                    </div>
+                `;
+            }).join('');
+
+            reportsList.innerHTML = reportsHTML;
+        }
+    </script>
+</body>
+</html>
