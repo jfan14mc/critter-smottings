@@ -418,7 +418,7 @@ const WildlifeReporting: React.FC = () => {
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p>📍 Location: {report.latitude.toFixed(6)}, {report.longitude.toFixed(6)}</p>
-                    <p>⏰ Reported: {formatDate(report.created_at)}</p>
+                    <p>⏰ Reported: {formatDate(report.reportTime)}</p>
                     <p className="text-xs text-gray-500">ID: {report.id}</p>
                   </div>
                 </div>
