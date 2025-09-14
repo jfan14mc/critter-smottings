@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 import type { Map, LeafletMouseEvent } from 'leaflet';
+import L from 'leaflet';
 import { MapContainer,TileLayer,useMapEvents, Marker} from 'react-leaflet';
 
 // Type definitions
@@ -43,6 +44,24 @@ const animalEmojis: Record<AnimalCategories, string> = {
   'fox': '🦊',
   'bunny': '🐰'
 };
+
+const selectedLocationIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const reportIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -346,7 +365,10 @@ const WildlifeReporting: React.FC = () => {
                 />
                 <MapClickHandler onLocationSelect={handleLocationSelect} />
                 {selectedLocation && (
-                  <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
+                  <Marker 
+                    position={[selectedLocation.lat, selectedLocation.lng]}
+                    icon={selectedLocationIcon} 
+                  />
                 )}
                 {/* Show existing reports on map */}
                 {reports.map(report => (
@@ -354,6 +376,7 @@ const WildlifeReporting: React.FC = () => {
                     key={report.id} 
                     position={[report.latitude, report.longitude]}
                     opacity={0.6}
+                    icon={reportIcon} 
                   />
                 ))}
               </MapContainer>
